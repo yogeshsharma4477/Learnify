@@ -2,51 +2,86 @@ const express = require('express')
 const router = express.Router()
 const {client, connect} = require('../db')
 var jwt = require('jsonwebtoken');
+const User = require('../model/users');
+const ValidCheckMiddleware = require('../Middleware/authToken');
 
 // User routes
 router.post('/users/signup', async (req, res) => {
     try {
-        const {username, password} = req.body
-        const userCollection = await connect("users")
-        const userAdded = await userCollection.insertOne({ username, password })
-        var token = jwt.sign({ username }, process.env.PrivateKey);
-        return res.send({result:userAdded,message:"success",token:token})
+        const { username = "", password = "", email = "", phone = "", purchasedCourses = [] } = req.body
+        let isUserExist = await User.findOne({ username })
+        if (isUserExist) {
+            return res.send({ result: [], message: "username already exists", token: "" })
+        } else {
+            const newUser = new User({ username, password, email, phone, purchasedCourses });
+            let saveUser = await newUser.save();
+            var token = jwt.sign({ username, id: saveUser._id }, process.env.PrivateKey, { expiresIn: '1h' });
+            res.cookie("authorization", JSON.stringify(token), {
+                httpOnly: true,
+                maxAge: 1 * 60 * 60 * 1000
+              });
+            return res.send({ success: true, message: "signup success" })
+        }
     } catch (error) {
-        return res.send({result:error?.message,message:"false"})
-    } finally {
-        client.close()
+        return res.send({ message: error?.message, success: "false" })
     }
 });
   
 router.post('/users/login', async (req, res) => {
     try {
-        const name = req.headers['username']
-        const password = req.headers['password']
-        const userCollection = await connect("users")
-        let validateUser = await userCollection.findOne({username : name, password :password})
-        if(validateUser){
-            let token = jwt.sign({ username }, process.env.PrivateKey)
-            return res.send({message:"success",token:token})
-        }else{
-            return res.send({message:"Invalid username or password"})
+        const { username = "", password = ""} = req.body
+        let validateUser = await User.findOne({ username, password })
+        if (validateUser) {
+            let token = jwt.sign({ username, id: validateUser._id }, process.env.PrivateKey, { expiresIn: '1h' })
+            // console.log(token,"token");
+            res.cookie("authorization", token, {
+                httpOnly: true,
+                maxAge: 1 * 60 * 60 * 1000
+              });
+            return res.send({ success: true, message: "login success" })
+        } else {
+            return res.send({ success: false, message: "Invalid username or password" })
         }
     } catch (error) {
-        res.send({result:error?.message,message:"false"})
-    } finally {
-        client.close()
+        return res.send({ result: error.message, message: "false" })
     }
 });
   
-router.get('/users/courses', (req, res) => {
-    res.send("hellowe od")
+router.get('/users/courses', async (req, res) => {
+    try {
+        let courses = await Course.find({ })
+        return res.send({ message: "success", result: courses, success : true})
+    } catch (error) {
+        return res.send({ result: error?.message, message: "false" })
+    }
 });
   
-router.post('/users/courses/:courseId', (req, res) => {
-    // logic to purchase a course
+router.post('/users/courses/:courseId', async (req, res) => {
+    try {
+        let selectedCourse = await Course.find({ adminId: req.params.courseId })
+        return res.send({ result : selectedCourse,  message: "Course updated successfully", success:true })
+    } catch (error) {
+        return res.send({ result: error?.message, message: error.message, success : false })
+    }
 });
   
-router.get('/users/purchasedCourses', (req, res) => {
-    // logic to view purchased courses
+router.put('/users/purchasedCourses',ValidCheckMiddleware("user"), async (req, res) => {
+    try {
+        let purchasedCourseId = await User.findOne({_id:req.id})
+        let userEnrolledCourese = await Course.find({ _id: { $in: purchasedCourseId.purchasedCourses } })
+        return res.send({ result: userEnrolledCourese, message: "fetch course successfully", success: true })
+    } catch (error) {
+        return res.send({ result: error?.message, message: "false" })
+    }
 });
+
+router.post('/users/buyCourse', ValidCheckMiddleware("user"), async (req, res) => {
+    try {
+        await User.findOneAndUpdate({ _id: req.id }, { $push: { purchasedCourses: req.id } })
+        return res.send({ message: "Course subscribed successfully", success: true })
+    } catch (error) {
+        return res.send({ result: error?.message, message: "false" })
+    }
+})
 
 module.exports = router;

@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const Admin = require('../model/admins');
 const User = require('../model/users');
 
-function AdminMiddleware(role) {
+function ValidCheckMiddleware(role) {
     return async (req, res, next) => {
         const token = req?.cookies?.authorization || req.headers['authorization']
         let decoded = jwt.verify(token, process.env.PrivateKey);
@@ -22,4 +22,4 @@ function AdminMiddleware(role) {
     }
 }
 
-module.exports = AdminMiddleware
+module.exports = ValidCheckMiddleware

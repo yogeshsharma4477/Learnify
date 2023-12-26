@@ -10,8 +10,8 @@ const userSchema = new Schema({
     created_at: {
         type: Date,
         default: Date.now,
-    }
-    // purchasedCourses: [{ type: mongoose.Schema.Types.ObjectId, ref: 'course' }]
+    },
+    purchasedCourses: [{ type: mongoose.Schema.Types.ObjectId, ref: 'course' }]
 });
 
 const User = mongoose.model('users', userSchema);
