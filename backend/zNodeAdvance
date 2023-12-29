@@ -1,0 +1,16 @@
+Q. Clustering in Nodejs
+> cluster of nodejs process can be used to run multiple instances of nodjes that can be distribute workloads amongs their apllication thread
+// to handle traffic, can do load balancing at same time
+ 
+    it is build in module
+Q. how many worker thread you can create?
+> as much as your computer has Cores
+    with os module you can find that how many core your system has - os.cpus().length
+    
+    const cluster = require('node:cluster');
+    if (cluster.isPrimary) {
+        // it will create a cluster as much your system has
+        for (let i = 0; i < os.cpus().length; i++) {
+            cluster.fork(); // creating worker
+        } 
+    }

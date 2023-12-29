@@ -1,3 +1,25 @@
+
+const mongoose = require('mongoose');
+function dbConnect() {
+    const databaseURI = `mongodb+srv://yogeshwarsharma4477:${process.env.mongoPassword}@cluster0.bxhfkak.mongodb.net/learnify`;
+    mongoose.connect(databaseURI);
+    const db = mongoose.connection;
+    db.useDb('lernify');
+    db.on('connected', () => {
+        console.log(`Connected to MongoDB ${db.name}`);
+    });
+
+    db.on('error', (err) => {
+        console.error(`MongoDB connection error: ${err}`);
+    });
+
+    db.on('disconnected', () => {
+        console.log('MongoDB connection disconnected');
+    });
+}
+
+module.exports = { dbConnect }
+
 // const { MongoClient, ServerApiVersion } = require('mongodb');
 // require('dotenv').config()
 // const uri = `mongodb+srv://yogeshwarsharma4477:${process.env.mongoPassword}@cluster0.bxhfkak.mongodb.net/?retryWrites=true&w=majority`;

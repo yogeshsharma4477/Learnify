@@ -1,0 +1,58 @@
+Q. typescript with events
+>   function handleChange(e: React.ChangeEventHandler<HTMLInputElement>) {
+    e.preventDefault();
+    console.log(e.target.value);
+    }
+
+    // just hover over event you'll get the type for that event
+
+Q. typescript with props
+>   -    export type PostProps = { id: number; title: string; body: string };
+
+    -    const PostCard = ({ id, title, body }: PostProps) => {
+         return ( 
+             <>
+                 <h1> {id}. {title} </h1>
+                 <p>{body}</p>
+             </>);
+         };
+         export default PostCard;
+        
+    -    data.map((post: PostProps) => {
+           return <PostCard key={post.id} {...post} />;
+         })
+
+Q. typescript with useState
+>    type UserType={
+        sessionId : number,
+        name : string
+    }
+    const [user, setUser] = useState<UserType | null>(null)
+
+
+Q. typescript with useRef
+>   const userRef = useRef<HTMLInputElement>(null);
+
+    useEffect(() => {
+        userRef.current?.focus();
+    }, []);
+
+    <input ref={userRef} type="text" onChange={handleChange} />
+
+
+Q. typescript Exclude
+> type ShapeType = "cube" | "square" | "rectangle" | "triangle"
+  type TwoShapeType = Exclude<ShapeType, "cube">
+
+  const shape : ShapeType = "cube"
+  const ColorType : TwoShapeType = "cube" // this will give error 
+  const ColorType : TwoShapeType =  "square" | "rectangle" | "triangle" // you can only assign among these only
+
+
+  const ThemeType = "dark" | "light"
+  const ColorType = "red" | "blue" | "Yellow"  
+
+  type ItemProps = {
+    //color : `${ThemeType}-${ColorType}`
+    color : Exclude<`${ThemeType}-${ColorType}`, 'dark-yellow'>
+  }
