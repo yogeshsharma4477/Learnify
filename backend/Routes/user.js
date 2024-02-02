@@ -3,6 +3,8 @@ const router = express.Router()
 const { client, connect } = require('../db')
 var jwt = require('jsonwebtoken');
 const User = require('../model/users');
+const Course = require('../model/courses');
+
 const ValidCheckMiddleware = require('../Middleware/authToken');
 const { z } = require("zod");
 
@@ -20,24 +22,37 @@ const SignupParams = z.infer < typeof signupInput >
     router.post('/users/signup', async (req, res) => {
         try {
             const { username = "", password = "", email = "", phone = "", purchasedCourses = [] } = req.body
-            let userInputCheck = userSchema.safeParse(req.body);
-            if (userInputCheck.success) {
-                let isUserExist = await User.findOne({ username })
-                if (isUserExist) {
-                    return res.send({ result: [], message: "username already exists", token: "" })
-                } else {
-                    const newUser = new User({ username, password, email, phone, purchasedCourses });
-                    let saveUser = await newUser.save();
-                    var token = jwt.sign({ username, id: saveUser._id }, process.env.PrivateKey, { expiresIn: '1h' });
-                    res.cookie("authorization", JSON.stringify(token), {
-                        httpOnly: true,
-                        maxAge: 1 * 60 * 60 * 1000
-                    });
-                    return res.send({ success: true, message: "signup success" })
-                }
+            // let userInputCheck = userSchema.safeParse(req.body);
+            let isUserExist = await User.findOne({ username })
+            if (isUserExist) {
+                return res.send({ result: [], message: "username already exists", token: "" })
             } else {
-                return res.status(411).send({ success: false, message: "Invalid Input" })
+                const newUser = new User({ username, password, email, phone, purchasedCourses });
+                let saveUser = await newUser.save();
+                var token = jwt.sign({ username, id: saveUser._id }, process.env.PrivateKey, { expiresIn: '1h' });
+                res.cookie("authorization", JSON.stringify(token), {
+                    httpOnly: true,
+                    maxAge: 1 * 60 * 60 * 1000
+                });
+                return res.send({ success: true, message: "signup success" })
             }
+            // if (userInputCheck.success) {
+            //     let isUserExist = await User.findOne({ username })
+            //     if (isUserExist) {
+            //         return res.send({ result: [], message: "username already exists", token: "" })
+            //     } else {
+            //         const newUser = new User({ username, password, email, phone, purchasedCourses });
+            //         let saveUser = await newUser.save();
+            //         var token = jwt.sign({ username, id: saveUser._id }, process.env.PrivateKey, { expiresIn: '1h' });
+            //         res.cookie("authorization", JSON.stringify(token), {
+            //             httpOnly: true,
+            //             maxAge: 1 * 60 * 60 * 1000
+            //         });
+            //         return res.send({ success: true, message: "signup success" })
+            //     }
+            // } else {
+            //     return res.status(411).send({ success: false, message: "Invalid Input" })
+            // }
         } catch (error) {
             return res.send({ message: error?.message, success: "false" })
         }
@@ -47,6 +62,7 @@ router.post('/users/login', async (req, res) => {
     try {
         const { username = "", password = "" } = req.body
         let validateUser = await User.findOne({ username, password })
+        console.log(username, password,"validateUser");
         if (validateUser) {
             let token = jwt.sign({ username, id: validateUser._id }, process.env.PrivateKey, { expiresIn: '1h' })
             // console.log(token,"token");
@@ -54,7 +70,7 @@ router.post('/users/login', async (req, res) => {
                 httpOnly: true,
                 maxAge: 1 * 60 * 60 * 1000
             });
-            return res.send({ success: true, message: "login success" })
+            return res.send({ data:validateUser , success: true, message: "login success" })
         } else {
             return res.send({ success: false, message: "Invalid username or password" })
         }

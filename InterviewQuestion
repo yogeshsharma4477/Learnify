@@ -1,0 +1,2 @@
+1. How to create Protected Route using nextAuth?
+> on every page getServerSideProps check if the session is cookie is set or not and if not redirect to home page,
